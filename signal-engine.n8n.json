@@ -1103,7 +1103,7 @@
         "content": "## 1. Setup and schedules\n\n**SETUP is the only node you edit.** Everything marked EXAMPLE inside it is working demo content: your ICP, your pain angles with an opener for each, scoring weights, and where hot leads go.\n\nAnything you leave empty (HeyReach IDs, HubSpot, Telegram) is skipped, so the workflow runs end to end before every tool is connected.\n\nThree schedules run the engines. The demo trigger sends three made-up signals straight to scoring.",
         "height": 998,
         "width": 720,
-        "color": 3
+        "color": 1
       },
       "id": "3bd6c1d9-0bdf-51ca-b097-98392bf1ceff",
       "name": "Section: setup",
@@ -1183,7 +1183,7 @@
         "content": "## Install: run once\n\nCreates both data tables (skipped if they already exist) and adds EXAMPLE sources that return real data on the first run: one company page, one keyword per platform and one hiring account. The champion row stays inactive until you paste a real profile.",
         "height": 364,
         "width": 1300,
-        "color": 3
+        "color": 7
       },
       "id": "088cf18a-2691-5e55-914b-d23d84ad6070",
       "name": "Section: install",
