@@ -1,0 +1,1636 @@
+{
+  "name": "Signal Engine: Trigify Replacement (Apify + Jev)",
+  "nodes": [
+    {
+      "id": "74ab8432-e9b1-4688-9aee-7cead82b4ac2",
+      "name": "Daily 07:00: Post Engagement",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        40,
+        318
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "828128ed-eeed-4f77-a1d2-8ccca7e39b5e",
+      "name": "SETUP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        558.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// =====================================================================\n//  SETUP: the only node you edit.\n//  Every block marked EXAMPLE is working demo content. Replace it with\n//  your own before you switch the schedules on.\n// =====================================================================\n\nconst engine =\n  $('Daily 07:00: Post Engagement').isExecuted ? 'engagement' :\n  $('Daily 06:00: Keyword Listening').isExecuted ? 'keywords' :\n  $('Monday 08:00: Job Changes and Hiring').isExecuted ? 'people' :\n  'demo';\n\nreturn [{ json: {\n  engine,\n\n  // 1. WHO YOU SELL TO. EXAMPLE: rewrite in plain words for your business.\n  //    Jev reads this to judge buyer fit, and to spot sellers pitching the same thing.\n  icp: {\n    what_we_sell: 'We build and run the sales system (CRM, pipeline, follow-up, reporting, outbound) for companies with a sales team',\n    ideal_buyer: 'Founder, CEO, COO, VP or Head of Sales, Head of RevOps at a company that sells a high-ticket product or service through human salespeople',\n    not_a_fit: 'Low-ticket or self-serve products, solo operators with no sales team, agencies or consultants selling sales or CRM services, software vendors, recruiters, job seekers, students'\n  },\n\n  // 2. PAIN ANGLES AND OPENERS. EXAMPLE: keep the structure, rewrite the words.\n  //    Jev picks the angle closest to what the person wrote or engaged with.\n  //    `opener` is sent to HeyReach as the custom variable {signal_opener}.\n  //    Write it the way you would type it. No pitch in the first line.\n  angles: {\n    crm_admin: {\n      means: 'Reps lose time to CRM data entry, logging, or manual admin instead of selling',\n      opener: 'Saw your note on reps losing time to CRM admin. Is it the logging itself, or chasing stage updates after calls?'\n    },\n    follow_up: {\n      means: 'Leads or deals slip because follow-up is slow, missed, or inconsistent',\n      opener: 'Saw your point on leads going cold before anyone follows up. Is that a speed problem or a who-owns-it problem on your side?'\n    },\n    pipeline_visibility: {\n      means: 'Leadership cannot trust the pipeline, forecast, or reporting',\n      opener: 'Saw your post on not trusting the pipeline numbers. Is it the data going in, or how the stages are defined?'\n    },\n    outbound_broken: {\n      means: 'Outbound or cold outreach has stopped producing meetings',\n      opener: 'Saw your take on outbound drying up. Did it fade gradually, or drop after one specific change?'\n    },\n    scaling_team: {\n      means: 'Hiring or onboarding reps, or deciding whether to add sales headcount',\n      opener: 'Saw you are thinking about adding reps. Have you mapped how much of the current team\\'s week goes to non-selling work?'\n    }\n  },\n\n  // 3. SCORING. Weights add up to 1. A lead at or above hot_score gets routed.\n  weights: { buyer_fit: 0.55, pain: 0.35, stacking: 0.10 },\n  hot_score: 70,\n\n  // 4. WHERE HOT LEADS GO. Anything left empty ('' or 0 or false) is skipped,\n  //    so the workflow runs end to end before you connect every tool.\n  heyreach_campaign_id: 0,        // PASTE: HeyReach campaign ID. The campaign must be running.\n  heyreach_sender_account_id: 0,  // PASTE: the LinkedIn sender account ID inside HeyReach\n  hubspot_enabled: false,         // true once the HubSpot credential is connected\n  enrich_emails: false,           // true = Apify email lookup on hot LinkedIn leads only (~$10 per 1k)\n  telegram_chat_id: ''            // PASTE: your Telegram chat ID for hot-lead alerts\n} }];\n"
+      }
+    },
+    {
+      "id": "55578af7-15ce-4578-8337-36f930846009",
+      "name": "Daily 06:00: Keyword Listening",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        40,
+        478
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 6,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "077c89ed-4cf7-4c85-aa18-69f3152af7b3",
+      "name": "Monday 08:00: Job Changes and Hiring",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        40,
+        638
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4262881d-043e-47e6-b7a3-419d0c22f426",
+      "name": "Try it: score 3 demo signals",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        40,
+        798
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "638a21ba-b541-4ccf-bd7a-ed94eccbdeb8",
+      "name": "Demo Run?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        520,
+        558.0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "isDemo",
+              "leftValue": "={{ $json.engine === 'demo' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "1de841d9-55ac-4f9a-bc8d-0559a5289957",
+      "name": "Demo Signals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        798
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// DEMO DATA. Three made-up signals so you can watch scoring work before connecting Apify.\n// Needs only the TypeSafe credential. Nothing here is pushed to HeyReach or HubSpot.\nconst run = 'demo-run-' + $execution.id;\nconst demo = [\n  { person_url: 'https://www.linkedin.com/in/demo-jane-example', person_name: 'Jane Example (demo)', headline: 'VP Sales at Northwind Solar, 40-person sales team', platform: 'linkedin', signal_type: 'post_comment', weight: 3, source_label: 'Demo: competitor post', context_text: 'Their comment: honestly my reps spend two hours a day logging calls in the CRM. Nobody wants to admit it.', context_url: run + '/1' },\n  { person_url: 'https://www.linkedin.com/in/demo-mark-agency', person_name: 'Mark Agency (demo)', headline: 'Founder @ PipelineCraft | I help B2B teams fix their CRM | HubSpot Partner', platform: 'linkedin', signal_type: 'keyword_post', weight: 4, source_label: 'Demo: keyword', context_text: 'Their post: 5 reasons your reps hate your CRM (and how my agency fixes it in 30 days). DM me.', context_url: run + '/2' },\n  { person_url: 'https://www.linkedin.com/in/demo-tom-legal', person_name: 'Tom Harbor (demo)', headline: 'CEO at Harbor Legal Group, 12 partners', platform: 'linkedin', signal_type: 'keyword_post', weight: 4, source_label: 'Demo: keyword', context_text: 'Their post: we get plenty of inbound consults but half of them never hear back from us within a day. How are other firms handling intake follow-up?', context_url: run + '/3' }\n];\nreturn demo.map(d => ({ json: d }));\n"
+      }
+    },
+    {
+      "id": "3f3cf2d4-0f06-4284-b8fe-4bc11d619a70",
+      "name": "Collect Signals",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        558.0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "476cbe78-3a28-400a-af44-56cb6a6bd99e",
+      "name": "Load Active Sources",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        558.0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signal Engine: Sources"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "active",
+              "condition": "isTrue"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "9e3098a7-dc0d-4392-8946-1d87e0091952",
+      "name": "Plan Apify Runs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        558.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Turns the active rows of the Sources table into Apify runs for the engine that fired.\n// Returns nothing when there is nothing to track, so an empty engine costs nothing.\nconst cfg = $('SETUP').first().json;\nconst rows = $input.all().map(i => i.json).filter(r => r.active && r.target);\nconst of = kind => rows.filter(r => r.kind === kind).map(r => r.target);\nconst runs = [];\n\nif (cfg.engine === 'engagement' && of('engagement_profile').length) {\n  // Posts from tracked profiles or company pages, plus who reacted and commented.\n  // 'short' profile mode is free and returns normal /in/ profile URLs, so the same\n  // person matches across engines and in HeyReach. Max 10 authors per run.\n  runs.push({ actor: 'harvestapi~linkedin-post-search', input: {\n    authorUrls: of('engagement_profile').slice(0, 10), postedLimit: 'week', sortBy: 'date', maxPosts: 30,\n    scrapeReactions: true, maxReactions: 200, reactionsProfileScraperMode: 'short', postNestedReactions: false,\n    scrapeComments: true, maxComments: 100, commentsProfileScraperMode: 'short', postNestedComments: false\n  } });\n}\n\nif (cfg.engine === 'keywords') {\n  if (of('keyword').length) runs.push({ actor: 'harvestapi~linkedin-post-search', input: {\n    searchQueries: of('keyword'), postedLimit: '24h', sortBy: 'date', maxPosts: 50,\n    scrapeComments: true, maxComments: 30, profileScraperMode: 'short', commentsProfileScraperMode: 'short'\n  } });\n  if (of('x_keyword').length) runs.push({ actor: 'apidojo~tweet-scraper', input: {\n    searchTerms: of('x_keyword'), sort: 'Latest', maxItems: 100, tweetLanguage: 'en',\n    start: $now.minus({ days: 1 }).toFormat('yyyy-MM-dd')\n  } });\n  if (of('reddit_keyword').length) runs.push({ actor: 'trudax~reddit-scraper-lite', input: {\n    searches: of('reddit_keyword'), sort: 'new', time: 'day', maxItems: 50, maxPostCount: 50,\n    searchPosts: true, skipComments: true, skipUserPosts: true, skipCommunity: true,\n    includeNSFW: false, proxy: { useApifyProxy: true }\n  } });\n}\n\nif (cfg.engine === 'people') {\n  if (of('champion').length) runs.push({ actor: 'harvestapi~linkedin-profile-scraper', input: {\n    profileScraperMode: 'Profile details no email ($4 per 1k)', queries: of('champion')\n  } });\n  const accounts = rows.filter(r => r.kind === 'hiring_account');\n  if (accounts.length) runs.push({ actor: 'harvestapi~linkedin-job-search', input: {\n    company: accounts.map(a => a.target),\n    jobTitles: [...new Set(accounts.flatMap(a => String(a.notes || 'sales development representative').split(',').map(t => t.trim()).filter(Boolean)))],\n    postedLimit: 'week', sortBy: 'date', maxItems: 100\n  } });\n}\n\nreturn runs.map(r => ({ json: r }));\n"
+      }
+    },
+    {
+      "id": "7aef3986-3f55-40fa-aa3f-9e862ba45f00",
+      "name": "Run Apify Actor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1240,
+        558.0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/{{ $json.actor }}/run-sync-get-dataset-items?timeout=280",
+        "jsonBody": "={{ JSON.stringify($json.input) }}",
+        "options": {
+          "timeout": 300000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json"
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "1ffe745c-d274-4116-b1d3-0280be61b68b",
+      "name": "Normalize Signals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        558.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Every Apify result becomes one signal shape:\n// person_url, person_name, headline, platform, signal_type, weight, source_label, context_text, context_url.\n// Champion lookups also emit a bookkeeping row that stores the employer seen today.\nconst cfg = $('SETUP').first().json;\nconst sources = $('Load Active Sources').all().map(i => i.json).filter(r => r.kind);\nconst items = $input.all().map(i => i.json).filter(x => x && typeof x === 'object' && !x.error);\nconst s = v => String(v || '');\nconst norm = u => s(u).split('?')[0].replace(/\\/$/, '').replace(/^https?:\\/\\/(www\\.)?/, '').toLowerCase();\nconst slug = u => { const m = s(u).match(/linkedin\\.com\\/in\\/([^\\/?#]+)/i); return m ? decodeURIComponent(m[1]).toLowerCase() : ''; };\nconst ofKind = k => sources.filter(r => r.kind === k);\nconst tracked = ofKind('engagement_profile').map(r => norm(r.target));\nconst out = [];\nconst add = o => { if (o.person_url && o.person_name) out.push({ json: o }); };\n\n// Which tracked profile or keyword produced this signal\nconst labelForAuthor = url => {\n  const a = norm(url);\n  const r = ofKind('engagement_profile').find(x => a && norm(x.target) && a.startsWith(norm(x.target)));\n  return r ? r.label : 'Tracked profile';\n};\nconst labelForText = (text, kind, fallback) => {\n  const t = s(text).toLowerCase();\n  const r = ofKind(kind).find(k => s(k.target).toLowerCase().split(/\\s+/).filter(w => w.length > 3).every(w => t.includes(w)));\n  return r ? r.label : fallback;\n};\n\n// LinkedIn posts, reactions and comments\nconst posts = items.filter(it => it.author && it.content !== undefined);\nconst findPost = id => posts.find(p => s(p.id) === s(id) || s(p.linkedinUrl).includes(s(id || '#none#'))) || null;\nconst linkedinSignal = (who, type, weight, post, comment) => {\n  if (!who || typeof who !== 'object') return;\n  const url = who.linkedinUrl || who.profileUrl || who.url || '';\n  if (!url || tracked.includes(norm(url))) return;\n  const author = (post && post.author) || {};\n  const kw = cfg.engine === 'keywords';\n  add({\n    person_url: url,\n    person_name: who.name || [who.firstName, who.lastName].filter(Boolean).join(' '),\n    headline: s(who.position || who.info || who.headline || who.occupation),\n    platform: 'linkedin',\n    signal_type: (kw ? 'keyword_' : 'post_') + type,\n    weight,\n    source_label: kw ? labelForText(post && post.content, 'keyword', 'LinkedIn keyword') : labelForAuthor(author.linkedinUrl),\n    context_text: (comment ? 'Their comment: ' + s(comment).slice(0, 500) + '\\n\\n' : '') + 'Post by ' + (author.name || 'someone') + ': ' + s(post && post.content).slice(0, 900),\n    context_url: (post && post.linkedinUrl) || ''\n  });\n};\n\nconst jobs = [];\nconst profiles = [];\n\nfor (const it of items) {\n  // X / Twitter\n  if (it.author && it.author.userName && (it.text || it.fullText)) {\n    const text = it.fullText || it.text;\n    add({ person_url: 'https://x.com/' + it.author.userName, person_name: it.author.name || it.author.userName, headline: s(it.author.description), platform: 'x', signal_type: 'x_keyword_post', weight: 3, source_label: labelForText(text, 'x_keyword', 'X keyword'), context_text: 'Their post: ' + s(text).slice(0, 900), context_url: it.url || it.twitterUrl || '' });\n    continue;\n  }\n  // Reddit\n  if (it.username && (it.title || it.body) && s(it.url).includes('reddit.com')) {\n    const text = s(it.title) + '\\n' + s(it.body);\n    add({ person_url: 'https://www.reddit.com/user/' + it.username, person_name: it.username, headline: 'Posts in ' + s(it.communityName || it.parsedCommunityName), platform: 'reddit', signal_type: 'reddit_keyword_post', weight: 3, source_label: labelForText(text, 'reddit_keyword', 'Reddit keyword'), context_text: 'Their post: ' + text.slice(0, 900), context_url: it.url });\n    continue;\n  }\n  if (cfg.engine === 'people') {\n    if ((it.title || it.jobTitle) && !it.firstName) { jobs.push(it); continue; }\n    if (it.firstName || it.publicIdentifier) { profiles.push(it); continue; }\n  }\n  // LinkedIn reaction or comment returned as its own item\n  if (it.reactionType && it.actor) { linkedinSignal(it.actor, 'reaction', 1, findPost(it.postId), null); continue; }\n  const commentText = it.commentary || it.text || it.comment;\n  if (it.actor && commentText) { linkedinSignal(it.actor, 'comment', cfg.engine === 'keywords' ? 2 : 3, findPost(it.postId), commentText); continue; }\n  // LinkedIn post (its author is the signal only in keyword search)\n  if (it.author && it.content !== undefined) {\n    if (cfg.engine === 'keywords') {\n      const a = it.author;\n      add({ person_url: a.linkedinUrl || '', person_name: a.name || '', headline: s(a.info || a.position || a.headline), platform: 'linkedin', signal_type: 'keyword_post', weight: 4, source_label: labelForText(it.content, 'keyword', 'LinkedIn keyword'), context_text: 'Their post: ' + s(it.content).slice(0, 900), context_url: it.linkedinUrl || '' });\n    }\n    for (const r of it.reactions || []) linkedinSignal(r.actor || r, 'reaction', 1, it, null);\n    for (const c of it.comments || []) linkedinSignal(c.actor || c.author || c, 'comment', cfg.engine === 'keywords' ? 2 : 3, it, c.commentary || c.text);\n  }\n}\n\n// Champions: compare today's employer with the one stored last run\nconst company = p => (p.currentPosition && p.currentPosition[0] && p.currentPosition[0].companyName) || (p.experience && p.experience[0] && p.experience[0].companyName) || p.companyName || '';\nfor (const c of ofKind('champion')) {\n  const p = profiles.find(x => slug(x.linkedinUrl) === slug(c.target) || s(x.publicIdentifier).toLowerCase() === slug(c.target));\n  if (!p) continue;\n  const now = s(company(p)).trim();\n  if (!now) continue;\n  const before = s(c.last_value).trim();\n  out.push({ json: { _bookkeeping: true, row_id: c.id, last_value: now } });\n  if (before && before.toLowerCase() !== now.toLowerCase()) {\n    add({ person_url: p.linkedinUrl || c.target, person_name: [p.firstName, p.lastName].filter(Boolean).join(' ') || c.label, headline: s(p.headline), platform: 'linkedin', signal_type: 'job_change', weight: 5, source_label: 'Champion: ' + (c.label || 'tracked'), context_text: 'Former champion moved from ' + before + ' to ' + now + '. New headline: ' + s(p.headline) + '. Notes: ' + s(c.notes), context_url: p.linkedinUrl || c.target });\n  }\n}\n\n// Hiring: one account-level signal per company, open roles rolled up\nconst byAccount = {};\nfor (const j of jobs) {\n  const cUrl = (j.company && (j.company.linkedinUrl || j.company.url)) || j.companyUrl || j.companyLinkedinUrl || '';\n  const cName = (j.company && j.company.name) || j.companyName || '';\n  const acct = ofKind('hiring_account').find(a => (cUrl && norm(cUrl).startsWith(norm(a.target))) || (cName && s(a.label).toLowerCase().includes(cName.toLowerCase())));\n  if (!acct) continue;\n  const g = byAccount[acct.target] = byAccount[acct.target] || { acct, name: cName, roles: [] };\n  g.roles.push(s(j.title || j.jobTitle) + (j.location ? ' (' + s(j.location.linkedinText || j.location) + ')' : '') + ' ' + s(j.linkedinUrl || j.url));\n}\nfor (const g of Object.values(byAccount)) {\n  add({ person_url: g.acct.target, person_name: g.name || g.acct.label, headline: 'Company, not a person: ' + (g.name || g.acct.label) + ' is hiring ' + g.roles.length + ' matching role(s)', platform: 'linkedin_company', signal_type: 'hiring', weight: 3, source_label: g.acct.label || 'Hiring watch', context_text: 'Open roles posted this week:\\n' + g.roles.slice(0, 8).join('\\n'), context_url: g.acct.target.replace(/\\/$/, '') + '/jobs/' });\n}\n\nreturn out;\n"
+      }
+    },
+    {
+      "id": "9e589169-b1dd-434e-afce-e86bca99f070",
+      "name": "Bookkeeping Row?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1680,
+        558.0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "isBookkeeping",
+              "leftValue": "={{ $json._bookkeeping === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "50bff85c-7a96-4700-8cbb-4f5395912788",
+      "name": "Store Current Employer",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1900,
+        398.0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.row_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "last_value": "={{ $json.last_value }}"
+          }
+        },
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signal Engine: Sources"
+        }
+      }
+    },
+    {
+      "id": "f48dca07-744e-4c72-a0d7-0f38eaffc0d6",
+      "name": "Load Last 30 Days",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2380,
+        558.0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signal Engine: Signals"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "detected_at",
+              "condition": "gte",
+              "keyValue": "={{ $now.minus({ days: 30 }).toISO() }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "ae2c39a0-e57a-4b40-872d-7a97c47afb29",
+      "name": "Dedupe and Stack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        558.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Drops anything already seen in the last 30 days, then counts every distinct signal\n// each person produced across all engines (signal stacking).\nconst EXCLUDE = ['student', 'intern', 'recruiter', 'talent acquisition', 'open to work', 'seeking new', 'job seeker'];\nconst incoming = $('Collect Signals').all().map(i => i.json);\nconst history = $('Load Last 30 Days').all().map(i => i.json).filter(r => r.dedup_key);\nconst clean = u => String(u || '').split('?')[0].replace(/\\/$/, '');\nconst seen = new Set(history.map(r => r.dedup_key));\nconst fresh = [];\nfor (const s of incoming) {\n  const url = clean(s.person_url);\n  if (!url || !s.signal_type) continue;\n  const key = [s.platform || 'linkedin', s.signal_type, url, s.context_url || s.source_label || ''].join('|').toLowerCase();\n  if (seen.has(key)) continue;\n  seen.add(key);\n  fresh.push({ ...s, person_url: url, dedup_key: key });\n}\nconst stacks = {};\nfor (const r of history.concat(fresh)) {\n  const url = clean(r.person_url);\n  if (url) (stacks[url] = stacks[url] || new Set()).add(r.signal_type + ' / ' + (r.source_label || 'n/a'));\n}\nreturn fresh.map(s => {\n  const headline = String(s.headline || '').slice(0, 300);\n  const stack = [...(stacks[s.person_url] || [])];\n  return { json: {\n    dedup_key: s.dedup_key, person_url: s.person_url, person_name: s.person_name || '', headline,\n    platform: s.platform || 'linkedin', signal_type: s.signal_type, source_label: s.source_label || '',\n    context_text: String(s.context_text || '').slice(0, 1500), context_url: s.context_url || '',\n    weight: Number(s.weight) || 1, stack_count: stack.length, stack_types: stack.join('; ').slice(0, 500),\n    prefilter: !EXCLUDE.some(w => headline.toLowerCase().includes(w)) && !!s.person_name,\n    score: 0, tier: 'unscored', opener: '', angle: '', why: '', routed: false,\n    detected_at: new Date().toISOString()\n  } };\n});\n"
+      }
+    },
+    {
+      "id": "7d1aa88a-b782-487b-b324-a0c2a3dacf3f",
+      "name": "Log Signal",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2820,
+        558.0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signal Engine: Signals"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        }
+      }
+    },
+    {
+      "id": "4c76f39d-5501-4024-9210-65d2ad69b7e9",
+      "name": "Passes Headline Prefilter?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3040,
+        558.0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "prefilter",
+              "leftValue": "={{ $json.prefilter === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "d7079929-059d-4a37-8a55-e6a5ce883df1",
+      "name": "Build Jev Questions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3300,
+        558.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Four independent judgments per signal, asked in one Jev call.\n// Jev returns probabilities, not prose. The next node turns them into a 0-100 score.\nconst cfg = $('SETUP').first().json;\nconst angles = {};\nfor (const [k, v] of Object.entries(cfg.angles)) angles[k] = v.means;\nangles.none = 'None of these, or not enough context to tell';\nconst questions = {\n  buyer_fit: { type: 'score',\n    instructions: { question: 'How well does this `person` match the ideal buyer in `icp`? Judge the role and the kind of company their headline suggests. If `person` is a company rather than an individual, judge whether the company fits.', icp: cfg.icp },\n    criteria: ['Clearly not a fit: matches something in icp.not_a_fit, or has no buying role', 'Unclear: not enough information about role or company', 'Partial fit: right kind of company but not a decision maker, or decision maker at a doubtful company', 'Strong fit: decision maker at a company that plausibly sells high-ticket through a sales team'] },\n  pain_intent: { type: 'score',\n    instructions: 'How strongly does `signal.text` show that this person (or company) is experiencing a sales-process problem right now? Reacting to someone else\\'s post counts less than describing their own situation. Actively hiring sales roles counts as a moderate signal.',\n    criteria: ['No evidence: a like or generic reaction, or text about something unrelated', 'Weak: agrees with or comments on the topic without describing their own situation', 'Moderate: describes the problem as relevant to their own team, or is hiring for it', 'Strong: describes their own current problem in concrete terms, or asks for help solving it'] },\n  is_seller: { type: 'noul',\n    instructions: { question: 'Is this person selling something related to `icp.what_we_sell` rather than buying it, for example a consultant, agency, coach, or software vendor promoting their own offer?', icp: cfg.icp } },\n  angle: { type: 'choice', instructions: 'Which problem is closest to what `signal.text` is about?', criteria: angles }\n};\nreturn $input.all().map(it => ({ json: { ...it.json, jev_body: {\n  model: 'jev-latest',\n  state: {\n    person: { name: it.json.person_name, headline: it.json.headline },\n    signal: { type: it.json.signal_type, source: it.json.source_label, text: it.json.context_text },\n    other_signals_last_30_days: it.json.stack_types\n  },\n  questions\n} } }));\n"
+      }
+    },
+    {
+      "id": "300a8e9e-4528-47e1-8b34-b074f4131ebb",
+      "name": "Ask Jev",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3520,
+        558.0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.typesafe.ai/v1/systemone",
+        "jsonBody": "={{ JSON.stringify($json.jev_body) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 10,
+              "batchInterval": 250
+            }
+          },
+          "timeout": 60000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json"
+      },
+      "retryOnFail": true,
+      "onError": "continueRegularOutput",
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "id": "039efe3b-4ee8-45d3-99c8-f29c5b2a9350",
+      "name": "Compose Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3740,
+        558.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Policy lives here, in code, so you can retune weights without re-asking Jev.\nconst cfg = $('SETUP').first().json;\nconst w = cfg.weights;\nreturn $input.all().map((it, i) => {\n  const base = $('Build Jev Questions').itemMatching(i).json;\n  const a = it.json.answers;\n  if (!a) return { json: { ...base, signal_row_id: base.id, score: 0, tier: 'error', opener: '', angle: '', why: 'Jev call failed: ' + JSON.stringify(it.json.error || it.json).slice(0, 200), is_hot: false } };\n  const fit = (a.buyer_fit.score || 0) / 3;\n  const pain = (a.pain_intent.score || 0) / 3;\n  const seller = a.is_seller.noul || 0;\n  const stacking = Math.min(Math.max((base.stack_count || 1) - 1, 0), 2) / 2;\n  let raw = w.buyer_fit * fit + w.pain * pain + w.stacking * stacking;\n  if (fit < 0.5) raw = Math.min(raw, 0.4);   // a non-buyer never goes hot, however loud the signal\n  if (seller > 0.5) raw = raw * 0.2;          // sellers pitching the same thing are not leads\n  const score = Math.round(raw * 100);\n  const angle = a.angle.choice || 'none';\n  const opener = cfg.angles[angle] ? cfg.angles[angle].opener : '';\n  return { json: {\n    ...base, signal_row_id: base.id, score, angle, opener,\n    tier: score >= cfg.hot_score ? 'hot' : score >= 40 ? 'warm' : 'cold',\n    why: 'fit ' + fit.toFixed(2) + ' | pain ' + pain.toFixed(2) + ' | seller ' + seller.toFixed(2) + ' | stack ' + base.stack_count + ' | angle ' + angle + ' (' + (a.angle.confidence || 0).toFixed(2) + ')',\n    is_hot: score >= cfg.hot_score\n  } };\n});\n"
+      }
+    },
+    {
+      "id": "33787022-6549-44b4-9136-adb17946c406",
+      "name": "Save Score",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3980,
+        398.0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.signal_row_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "score": "={{ $json.score }}",
+            "tier": "={{ $json.tier }}",
+            "opener": "={{ $json.opener }}",
+            "angle": "={{ $json.angle }}",
+            "why": "={{ $json.why }}"
+          }
+        },
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signal Engine: Signals"
+        }
+      }
+    },
+    {
+      "id": "ae7c73dc-9ba7-4a7f-83e0-eb6557616d46",
+      "name": "Hot Signal?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4280,
+        558.0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "isHot",
+              "leftValue": "={{ $json.is_hot === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "3337ca0d-edff-4dcf-93ee-8198ae54e189",
+      "name": "Live LinkedIn Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4500,
+        558.0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "isLive",
+              "leftValue": "={{ $json.person_url.includes('linkedin.com/in/') && $('SETUP').first().json.engine !== 'demo' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "07510ba4-b785-4ebe-a9c8-a1ea3bee07be",
+      "name": "Email Lookup On?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4720,
+        478
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "enrichOn",
+              "leftValue": "={{ $('SETUP').first().json.enrich_emails === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "23866c8c-bafb-43f7-adf8-948f93951758",
+      "name": "Enrich Hot Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        4940,
+        318
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/harvestapi~linkedin-profile-scraper/run-sync-get-dataset-items?timeout=240",
+        "jsonBody": "={{ JSON.stringify({ profileScraperMode: \"Profile details + email search ($10 per 1k)\", queries: $input.all().map(i => i.json.person_url) }) }}",
+        "options": {
+          "timeout": 300000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json"
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "9248faeb-4a94-4411-8634-9692c53b3714",
+      "name": "Attach Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5160,
+        558.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Adds name, company and email from the Apify lookup when it ran. Matches by LinkedIn slug.\nconst leads = $('Live LinkedIn Lead?').all().map(i => i.json);\nconst profiles = $('Enrich Hot Leads').isExecuted ? $('Enrich Hot Leads').all().map(i => i.json).filter(p => p && (p.linkedinUrl || p.publicIdentifier)) : [];\nconst slug = u => { const m = String(u || '').match(/linkedin\\.com\\/in\\/([^\\/?#]+)/i); return m ? decodeURIComponent(m[1]).toLowerCase() : ''; };\nconst findEmail = (o, d = 0) => {\n  if (d > 6 || o === null || o === undefined) return '';\n  if (typeof o === 'string') return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(o) ? o : '';\n  if (typeof o === 'object') { for (const k in o) { const r = findEmail(o[k], d + 1); if (r) return r; } }\n  return '';\n};\nconst company = p => (p.currentPosition && p.currentPosition[0] && p.currentPosition[0].companyName) || (p.experience && p.experience[0] && p.experience[0].companyName) || '';\nreturn leads.map(lead => {\n  const s = slug(lead.person_url);\n  const p = profiles.find(x => slug(x.linkedinUrl) === s || String(x.publicIdentifier || '').toLowerCase() === s) || {};\n  const name = String(lead.person_name || '').split(' ');\n  return { json: { ...lead,\n    profile_url: p.linkedinUrl || lead.person_url,\n    first_name: p.firstName || name[0] || '',\n    last_name: p.lastName || name.slice(1).join(' '),\n    company: company(p),\n    email: findEmail(p.emails || p.email || '')\n  } };\n});\n"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "3251781d-7c90-4af9-b9f1-a974c61922c4",
+      "name": "Telegram Set Up?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5380,
+        798
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "telegramSet",
+              "leftValue": "={{ !!String($('SETUP').first().json.telegram_chat_id || '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "07dcae58-671d-4f81-85a8-d05900890f54",
+      "name": "HeyReach Set Up?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5380,
+        398.0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "heyreachSet",
+              "leftValue": "={{ Number($('SETUP').first().json.heyreach_campaign_id) > 0 && Number($('SETUP').first().json.heyreach_sender_account_id) > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "3d986040-b666-4502-a9d2-2fdeb32ce147",
+      "name": "Build HeyReach Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5600,
+        398.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Up to 100 leads per HeyReach call. The opener rides along as the custom variable {signal_opener}.\nconst cfg = $('SETUP').first().json;\nconst field = (name, value) => ({ name, value: String(value || '').slice(0, 500) });\nconst pairs = $input.all().map(i => i.json).map(l => ({\n  linkedInAccountId: Number(cfg.heyreach_sender_account_id),\n  lead: {\n    firstName: l.first_name, lastName: l.last_name, profileUrl: l.profile_url, emailAddress: l.email || null,\n    companyName: l.company, position: l.headline,\n    customUserFields: [field('signal_opener', l.opener), field('signal_type', l.signal_type), field('signal_source', l.source_label), field('signal_score', l.score)]\n  }\n}));\nconst out = [];\nfor (let i = 0; i < pairs.length; i += 100) out.push({ json: { payload: { campaignId: Number(cfg.heyreach_campaign_id), accountLeadPairs: pairs.slice(i, i + 100) } } });\nreturn out;\n"
+      }
+    },
+    {
+      "id": "4e8fa38e-306a-4f40-be2f-501c020a1eac",
+      "name": "Add Leads to HeyReach Campaign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5820,
+        398.0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heyreach.io/api/public/campaign/AddLeadsToCampaignV2",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {},
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json"
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "6e9dd109-1921-4ae6-a0ca-554b9fba1d05",
+      "name": "Leads Sent to HeyReach",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6040,
+        398.0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Marks rows as routed only when HeyReach accepted the batch.\nconst ok = $input.all().some(i => !i.json.error);\nreturn ok ? $('Attach Enrichment').all().map(i => ({ json: { signal_row_id: i.json.signal_row_id } })) : [];"
+      }
+    },
+    {
+      "id": "2fa74dca-d52b-4097-8498-6c0a5bd5a522",
+      "name": "Mark Routed",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        6260,
+        398.0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.signal_row_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "routed": true
+          }
+        },
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signal Engine: Signals"
+        }
+      }
+    },
+    {
+      "id": "5f1f9987-b30f-4d0c-8eb6-a117e1a51bc3",
+      "name": "HubSpot On and Email Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5380,
+        598.0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "hubspotSet",
+              "leftValue": "={{ $('SETUP').first().json.hubspot_enabled === true && !!$json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true
+      }
+    },
+    {
+      "id": "4a0383dd-1208-4ae5-885c-34ad9d3307e6",
+      "name": "Upsert HubSpot Contact",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        5600,
+        598.0
+      ],
+      "parameters": {
+        "resource": "contact",
+        "operation": "upsert",
+        "authentication": "appToken",
+        "email": "={{ $json.email }}",
+        "additionalFields": {
+          "firstName": "={{ $json.first_name }}",
+          "lastName": "={{ $json.last_name }}",
+          "companyName": "={{ $json.company }}",
+          "jobTitle": "={{ $json.headline }}",
+          "message": "=Signal {{ $json.score }}/100: {{ $json.signal_type }} via {{ $json.source_label }}. {{ $json.why }} {{ $json.context_url }}"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "0bd35abb-1214-460f-8d17-c4d6d009fe18",
+      "name": "Alert Hot Signal",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        5600,
+        798
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('SETUP').first().json.telegram_chat_id }}",
+        "text": "={{ $json.tier === 'hot' ? 'HOT' : 'Signal' }} {{ $json.score }}/100 | {{ $json.person_name }}\n{{ $json.headline }}\n\n{{ $json.signal_type }} via {{ $json.source_label }}\nJev: {{ $json.why }}\n\nOpener: {{ $json.opener || '(no angle matched, write your own)' }}\n{{ $json.email ? 'Email: ' + $json.email : '' }}\n{{ $json.profile_url || $json.person_url }}\n{{ $json.context_url }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "015eb8c0-8b74-4105-b6b5-69521d91ea92"
+    },
+    {
+      "id": "77c9fe78-742b-4d39-aa4a-9657abe76cd9",
+      "name": "Run once: create tables and example sources",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        40,
+        1242
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "bceb5d09-ec90-4e2a-9b35-37dcd191b6f9",
+      "name": "Create Sources Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        1242
+      ],
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "Signal Engine: Sources",
+        "columns": {
+          "column": [
+            {
+              "name": "kind",
+              "type": "string"
+            },
+            {
+              "name": "target",
+              "type": "string"
+            },
+            {
+              "name": "label",
+              "type": "string"
+            },
+            {
+              "name": "active",
+              "type": "boolean"
+            },
+            {
+              "name": "last_value",
+              "type": "string"
+            },
+            {
+              "name": "notes",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      }
+    },
+    {
+      "id": "cabcc2d0-cf0d-484f-95d2-6a2b4966d4a6",
+      "name": "Create Signals Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        1242
+      ],
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "Signal Engine: Signals",
+        "columns": {
+          "column": [
+            {
+              "name": "dedup_key",
+              "type": "string"
+            },
+            {
+              "name": "person_url",
+              "type": "string"
+            },
+            {
+              "name": "person_name",
+              "type": "string"
+            },
+            {
+              "name": "headline",
+              "type": "string"
+            },
+            {
+              "name": "platform",
+              "type": "string"
+            },
+            {
+              "name": "signal_type",
+              "type": "string"
+            },
+            {
+              "name": "source_label",
+              "type": "string"
+            },
+            {
+              "name": "context_text",
+              "type": "string"
+            },
+            {
+              "name": "context_url",
+              "type": "string"
+            },
+            {
+              "name": "weight",
+              "type": "number"
+            },
+            {
+              "name": "stack_count",
+              "type": "number"
+            },
+            {
+              "name": "stack_types",
+              "type": "string"
+            },
+            {
+              "name": "prefilter",
+              "type": "boolean"
+            },
+            {
+              "name": "score",
+              "type": "number"
+            },
+            {
+              "name": "tier",
+              "type": "string"
+            },
+            {
+              "name": "opener",
+              "type": "string"
+            },
+            {
+              "name": "angle",
+              "type": "string"
+            },
+            {
+              "name": "why",
+              "type": "string"
+            },
+            {
+              "name": "routed",
+              "type": "boolean"
+            },
+            {
+              "name": "detected_at",
+              "type": "date"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      }
+    },
+    {
+      "id": "62059e75-8540-48a9-b22e-beb89dcda549",
+      "name": "Example Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        1242
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// EXAMPLE SOURCES. They work as-is so the first run returns real data.\n// Replace each target with your own competitors, keywords, champions and accounts.\n// kind: engagement_profile | keyword | x_keyword | reddit_keyword | champion | hiring_account\nreturn [\n  { kind: 'engagement_profile', target: 'https://www.linkedin.com/company/heyreach/', label: 'EXAMPLE: HeyReach page (swap for a competitor)', active: true, last_value: '', notes: 'Profile or company page. People who react or comment on its posts become signals.' },\n  { kind: 'keyword', target: 'reps updating the CRM', label: 'EXAMPLE: pain, CRM admin', active: true, last_value: '', notes: 'LinkedIn post search. Write the pain the way a buyer says it, not a category word.' },\n  { kind: 'x_keyword', target: 'our CRM reps', label: 'EXAMPLE: X, CRM pain', active: true, last_value: '', notes: 'X search syntax works here.' },\n  { kind: 'reddit_keyword', target: 'reps won\\'t update CRM', label: 'EXAMPLE: Reddit, CRM pain', active: true, last_value: '', notes: 'Reddit search.' },\n  { kind: 'hiring_account', target: 'https://www.linkedin.com/company/hubspot/', label: 'EXAMPLE: HubSpot (swap for a target account)', active: true, last_value: '', notes: 'sales development representative, revops' },\n  { kind: 'champion', target: 'https://www.linkedin.com/in/PASTE-A-PAST-CHAMPION/', label: 'EXAMPLE: past buyer, replace then set active', active: false, last_value: '', notes: 'First run stores their employer. A later change fires a job_change signal.' }\n].map(r => ({ json: r }));\n"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "5b90a2c3-cb1a-4015-abed-7baa7aa7b2b4",
+      "name": "Insert Example Sources",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        920,
+        1242
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signal Engine: Sources"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Signal Engine\n### A Trigify replacement you own\n\nTracks the buying signals Trigify did, scores every person with **Jev** (TypeSafe) and routes the hot ones to **HeyReach**, **HubSpot** and **Telegram**.\n\n**Replaces**\n- Engagement on competitor, influencer and your own posts\n- Keyword listening on LinkedIn, X and Reddit\n- Champion job changes and target-account hiring\n- AI lead scoring and the push into outreach\n\n**Also built in**\n- **Signal stacking**: every signal a person produced in 30 days, across all engines, counts toward one score\n- **Seller filter**: agencies and vendors talking about your topic are dropped\n- **Opener per lead**: your own first line reaches HeyReach as `{signal_opener}`\n- **No LinkedIn seat at risk**: all scraping runs through no-cookie Apify actors\n\n**Start here**\n1. Create two credentials of type *Bearer Auth*: `Apify API token` and `TypeSafe API key`\n2. Click **Run once: create tables and example sources** (bottom left)\n3. Click **Try it: score 3 demo signals**. It needs only the TypeSafe key\n4. Edit the **SETUP** node in section 1, then replace the EXAMPLE rows in the *Signal Engine: Sources* table\n5. Activate the workflow",
+        "height": 998,
+        "width": 720,
+        "color": 7
+      },
+      "id": "ef691107-6ec6-5be2-a999-2593128e3a51",
+      "name": "Section: overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 1. Setup and schedules\n\n**SETUP is the only node you edit.** Everything marked EXAMPLE inside it is working demo content: your ICP, your pain angles with an opener for each, scoring weights, and where hot leads go.\n\nAnything you leave empty (HeyReach IDs, HubSpot, Telegram) is skipped, so the workflow runs end to end before every tool is connected.\n\nThree schedules run the engines. The demo trigger sends three made-up signals straight to scoring.",
+        "height": 998,
+        "width": 720,
+        "color": 3
+      },
+      "id": "3bd6c1d9-0bdf-51ca-b097-98392bf1ceff",
+      "name": "Section: setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. Collect signals with Apify\n\nEach schedule reads the active rows of the *Signal Engine: Sources* table for its kinds and runs only the actors it needs. No active rows means no run and no cost.\n\n- **Daily 07:00**, `engagement_profile`: harvestapi/linkedin-post-search filtered to those authors, with the people who reacted and commented\n- **Daily 06:00**, `keyword` / `x_keyword` / `reddit_keyword`: harvestapi/linkedin-post-search, apidojo/tweet-scraper, trudax/reddit-scraper-lite\n- **Monday 08:00**, `champion` / `hiring_account`: harvestapi/linkedin-profile-scraper, harvestapi/linkedin-job-search\n\nThe sync endpoint stops at 300 seconds, so keep each engine to about 10 profiles or keywords.",
+        "height": 998,
+        "width": 1320,
+        "color": 5
+      },
+      "id": "2f5776c2-c3b9-56cd-bc25-3ea7c4ca8da2",
+      "name": "Section: collect",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        740,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. Dedupe, stack and log\n\nAnything seen in the last 30 days is dropped, so daily re-scrapes never fire twice.\n\n**Stacking** counts every distinct signal one person produced across all engines. A comment on a competitor plus a post about the pain is two signals, and the score rises.\n\nEvery signal is logged to *Signal Engine: Signals* before scoring. Recruiters, students and job seekers are dropped by headline before any AI spend.",
+        "height": 998,
+        "width": 1100,
+        "color": 7
+      },
+      "id": "1106a91b-8c00-5736-99cd-58e856f95206",
+      "name": "Section: dedupe",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 4. Score with Jev\n\nOne Jev call per signal answers four typed questions and returns probabilities, not prose:\n- **buyer_fit** (0 to 3) against your ICP\n- **pain_intent** (0 to 3): their own problem, or just a like?\n- **is_seller** (yes/no): an agency or vendor pitching the same thing\n- **angle**: which of your SETUP pains it matches\n\n**Compose Score** turns these into 0 to 100 in plain code. Retune the weights in SETUP without calling Jev again. The reasoning is saved in the `why` column.",
+        "height": 998,
+        "width": 940,
+        "color": 4
+      },
+      "id": "ded763b0-1fb4-5eda-97b7-6cfc0c0fe947",
+      "name": "Section: score",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 5. Route hot leads\n\nHot means the score is at or above `hot_score` in SETUP. **LinkedIn profiles** get an optional email lookup, then go to your HeyReach campaign with the opener as `{signal_opener}`, and to HubSpot when an email was found. Rows are marked `routed` only after HeyReach accepts them. **X, Reddit and hiring signals** go to Telegram, because you pick the person. **Demo signals** never leave the workflow. Each step checks SETUP first and skips cleanly if it is not configured.",
+        "height": 998,
+        "width": 2200,
+        "color": 6
+      },
+      "id": "6ca881d0-1eb8-59b7-9e93-27231c6d7dd2",
+      "name": "Section: route",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Install: run once\n\nCreates both data tables (skipped if they already exist) and adds EXAMPLE sources that return real data on the first run: one company page, one keyword per platform and one hiring account. The champion row stays inactive until you paste a real profile.",
+        "height": 364,
+        "width": 1300,
+        "color": 3
+      },
+      "id": "088cf18a-2691-5e55-914b-d23d84ad6070",
+      "name": "Section: install",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        1078
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 07:00: Post Engagement": {
+      "main": [
+        [
+          {
+            "node": "SETUP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SETUP": {
+      "main": [
+        [
+          {
+            "node": "Demo Run?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 06:00: Keyword Listening": {
+      "main": [
+        [
+          {
+            "node": "SETUP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monday 08:00: Job Changes and Hiring": {
+      "main": [
+        [
+          {
+            "node": "SETUP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Try it: score 3 demo signals": {
+      "main": [
+        [
+          {
+            "node": "SETUP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Demo Run?": {
+      "main": [
+        [
+          {
+            "node": "Demo Signals",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Active Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Demo Signals": {
+      "main": [
+        [
+          {
+            "node": "Collect Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Signals": {
+      "main": [
+        [
+          {
+            "node": "Load Last 30 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Active Sources": {
+      "main": [
+        [
+          {
+            "node": "Plan Apify Runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan Apify Runs": {
+      "main": [
+        [
+          {
+            "node": "Run Apify Actor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Apify Actor": {
+      "main": [
+        [
+          {
+            "node": "Normalize Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Signals": {
+      "main": [
+        [
+          {
+            "node": "Bookkeeping Row?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bookkeeping Row?": {
+      "main": [
+        [
+          {
+            "node": "Store Current Employer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Collect Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Last 30 Days": {
+      "main": [
+        [
+          {
+            "node": "Dedupe and Stack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe and Stack": {
+      "main": [
+        [
+          {
+            "node": "Log Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Signal": {
+      "main": [
+        [
+          {
+            "node": "Passes Headline Prefilter?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Passes Headline Prefilter?": {
+      "main": [
+        [
+          {
+            "node": "Build Jev Questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Jev Questions": {
+      "main": [
+        [
+          {
+            "node": "Ask Jev",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Jev": {
+      "main": [
+        [
+          {
+            "node": "Compose Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Score": {
+      "main": [
+        [
+          {
+            "node": "Save Score",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hot Signal?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot Signal?": {
+      "main": [
+        [
+          {
+            "node": "Live LinkedIn Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Live LinkedIn Lead?": {
+      "main": [
+        [
+          {
+            "node": "Email Lookup On?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Set Up?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Lookup On?": {
+      "main": [
+        [
+          {
+            "node": "Enrich Hot Leads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Attach Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Hot Leads": {
+      "main": [
+        [
+          {
+            "node": "Attach Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Enrichment": {
+      "main": [
+        [
+          {
+            "node": "HeyReach Set Up?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HubSpot On and Email Found?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram Set Up?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Set Up?": {
+      "main": [
+        [
+          {
+            "node": "Alert Hot Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HeyReach Set Up?": {
+      "main": [
+        [
+          {
+            "node": "Build HeyReach Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HeyReach Batch": {
+      "main": [
+        [
+          {
+            "node": "Add Leads to HeyReach Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Leads to HeyReach Campaign": {
+      "main": [
+        [
+          {
+            "node": "Leads Sent to HeyReach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads Sent to HeyReach": {
+      "main": [
+        [
+          {
+            "node": "Mark Routed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot On and Email Found?": {
+      "main": [
+        [
+          {
+            "node": "Upsert HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run once: create tables and example sources": {
+      "main": [
+        [
+          {
+            "node": "Create Sources Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sources Table": {
+      "main": [
+        [
+          {
+            "node": "Create Signals Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Signals Table": {
+      "main": [
+        [
+          {
+            "node": "Example Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Example Sources": {
+      "main": [
+        [
+          {
+            "node": "Insert Example Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
